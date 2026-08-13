@@ -82,7 +82,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
         {/* Main Chart */}
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }} className="glass-panel p-6 lg:col-span-2 flex flex-col h-full">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }} className="glass-panel p-6 lg:col-span-2 flex flex-col h-full border-l-4 border-l-primary-cyan">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center">
@@ -112,7 +112,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Activity Feed */}
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="glass-panel p-6 flex flex-col h-full overflow-hidden">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="glass-panel p-6 flex flex-col h-full overflow-hidden border-l-4 border-l-orange-400">
           <div className="flex items-center mb-6">
             <AlertTriangle className="w-5 h-5 mr-2 text-orange-400" />
             <h3 className="text-lg font-bold text-white">System Activity</h3>

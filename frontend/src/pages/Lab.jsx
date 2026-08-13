@@ -248,7 +248,7 @@ export default function Lab() {
               </div>
             </motion.div>
 
-            <motion.div initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} transition={{delay: 0.1}} className="glass-panel p-5 bg-gradient-to-b from-card/80 to-background">
+            <motion.div initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} transition={{delay: 0.1}} className="glass-panel p-5 bg-gradient-to-b from-card/80 to-background border-l-4 border-l-blue-500">
               <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-4 flex items-center"><Activity className="w-4 h-4 mr-2"/> Real-Time Telemetry</h3>
               <div className="space-y-4">
                 <div>
@@ -268,7 +268,7 @@ export default function Lab() {
               </div>
             </motion.div>
 
-            <motion.div initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} transition={{delay: 0.2}} className="glass-panel p-5 border border-primary-green/30 relative overflow-hidden">
+            <motion.div initial={{opacity:0, x:-20}} animate={{opacity:1, x:0}} transition={{delay: 0.2}} className="glass-panel p-5 border border-primary-green/30 relative overflow-hidden border-l-4 border-l-primary-green">
               <div className="absolute inset-0 bg-primary-green/5 blur-xl"></div>
               <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2 relative z-10">Automated Decision</h3>
               <div className="flex items-center space-x-3 relative z-10">
@@ -286,7 +286,7 @@ export default function Lab() {
 
           {/* Right Column */}
           <div className="lg:col-span-3 flex flex-col h-full space-y-6">
-            <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: 0.3}} className="glass-panel p-6 flex-1 flex flex-col">
+            <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: 0.3}} className="glass-panel p-6 flex-1 flex flex-col border-l-4 border-l-purple-500">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-white flex items-center"><Microscope className="w-5 h-5 mr-2 text-primary-cyan"/> Daily Tracking Grid</h3>
                 <button onClick={handleSaveDraft} className="text-xs bg-background border border-border text-text-muted px-3 py-1.5 rounded flex items-center hover:text-white hover:border-primary-cyan transition-colors" disabled={activeTest.status === 'Completed'}>
@@ -375,7 +375,7 @@ export default function Lab() {
               </div>
             </motion.div>
 
-            <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: 0.4}} className="glass-panel p-6 bg-[#06111f] border-primary-cyan/20">
+            <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} transition={{delay: 0.4}} className="glass-panel p-6 bg-[#06111f] border-primary-cyan/20 border-l-4 border-l-orange-400">
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-white flex items-center mb-1"><FileSignature className="w-5 h-5 mr-2 text-primary-cyan"/> Cryptographic Sign-off</h3>
