@@ -227,7 +227,7 @@ export default function Lab() {
       </div>
 
       {!activeTest ? (
-        <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-border rounded-xl">
+        <div className="flex-1 flex flex-col items-center justify-center glass-panel border-dashed border-border rounded-xl border-l-4 border-l-text-muted">
           <Beaker className="w-16 h-16 text-text-muted mb-4 opacity-50" />
           <h2 className="text-xl font-bold text-white mb-2">No Active Test Selected</h2>
           <p className="text-text-muted">Select a test from the dropdown or start a new one.</p>
