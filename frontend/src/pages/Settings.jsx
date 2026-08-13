@@ -77,7 +77,7 @@ export default function Settings() {
         <AnimatePresence mode="wait">
           
           {activeTab === 'company' && (
-            <motion.div key="company" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="glass-panel p-8 max-w-3xl">
+            <motion.div key="company" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="glass-panel p-8 max-w-3xl border-l-4 border-l-primary-cyan">
               <h2 className="text-lg font-bold text-white mb-6">White-Label Branding</h2>
               <form onSubmit={handleSaveCompany} className="space-y-6">
                 <div className="flex items-start space-x-6">
@@ -164,7 +164,7 @@ export default function Settings() {
 
           {activeTab === 'ledger' && (
             <motion.div key="ledger" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <div className="glass-panel overflow-hidden">
+              <div className="glass-panel overflow-hidden border-l-4 border-l-primary-cyan">
                 <div className="p-4 border-b border-border/50 bg-background/50 flex justify-between items-center">
                   <h3 className="text-sm font-bold text-white flex items-center"><ShieldCheck className="w-4 h-4 mr-2 text-primary-cyan"/> Immutable Event Log</h3>
                   <div className="flex space-x-2">

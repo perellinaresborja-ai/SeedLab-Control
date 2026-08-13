@@ -74,7 +74,7 @@ export default function Tasks() {
             }) : null}
 
             {testsToReview.length === 0 && lowStockVarieties.length === 0 && (
-              <div className="glass-panel p-8 text-center border-dashed border-border flex flex-col items-center">
+              <div className="glass-panel p-8 text-center border-dashed border-border flex flex-col items-center border-l-4 border-l-primary-green">
                 <ShieldCheck className="w-10 h-10 text-primary-green/50 mb-3" />
                 <h3 className="text-sm font-bold text-white">All Clear</h3>
                 <p className="text-xs text-text-muted">No pending system alerts.</p>
@@ -89,7 +89,7 @@ export default function Tasks() {
             <CheckSquare className="w-5 h-5 mr-2 text-primary-cyan"/> Custom Reminders
           </h2>
           
-          <div className="glass-panel p-6">
+          <div className="glass-panel p-6 border-l-4 border-l-primary-cyan">
             <form onSubmit={handleAddSubmit} className="flex space-x-3 mb-6">
               <input 
                 type="text" 
