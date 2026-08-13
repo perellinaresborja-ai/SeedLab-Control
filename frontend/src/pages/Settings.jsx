@@ -164,14 +164,14 @@ export default function Settings() {
 
           {activeTab === 'ledger' && (
             <motion.div key="ledger" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <div className="glass-panel overflow-hidden border-l-4 border-l-primary-cyan">
+              <div className="glass-panel border-l-4 border-l-primary-cyan flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
                 <div className="p-4 border-b border-border/50 bg-background/50 flex justify-between items-center">
                   <h3 className="text-sm font-bold text-white flex items-center"><ShieldCheck className="w-4 h-4 mr-2 text-primary-cyan"/> Immutable Event Log</h3>
                   <div className="flex space-x-2">
                     <span className="px-2 py-1 rounded bg-background border border-border text-[10px] text-text-muted font-mono flex items-center"><Key className="w-3 h-3 mr-1"/> WORM STORAGE</span>
                   </div>
                 </div>
-                <div className="overflow-y-auto pb-8 pt-4">
+                <div className="overflow-y-auto pb-8 pt-4 px-4 flex-1 custom-scrollbar">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {auditLogs.map((log) => (
                       <ItemCard
@@ -183,7 +183,7 @@ export default function Settings() {
                         badgeText={log.entity}
                         badgeColor="text-primary-cyan bg-primary-cyan/10 border-primary-cyan/30"
                         fields={[
-                          { label: 'Actor', value: log.user },
+                          { label: 'Actor', value: log.userName || log.user || log.user_name || 'SYSTEM' },
                           { label: 'Details', value: <span className="text-xs">{log.details}</span> }
                         ]}
                       />
