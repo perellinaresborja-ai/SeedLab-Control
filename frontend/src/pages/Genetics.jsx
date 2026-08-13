@@ -137,7 +137,7 @@ export default function Genetics() {
             
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5 flex-1 content-start">
               {origins.length === 0 ? (
-                <div className="col-span-full p-8 text-center text-text-muted border border-dashed border-border rounded-lg h-fit">No hay orígenes registrados.</div>
+                <div className="col-span-full p-8 text-center text-text-muted glass-panel rounded-lg h-fit border-l-4 border-l-text-muted">No hay orígenes registrados.</div>
               ) : origins.map(o => (
                 <ItemCard 
                   key={o.id} id={o.id} title={o.name} icon={TreePine}
@@ -165,7 +165,7 @@ export default function Genetics() {
             
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5 content-start">
               {mothers.length === 0 ? (
-                <div className="col-span-full p-8 text-center text-text-muted border border-dashed border-border rounded-lg">No hay madres registradas.</div>
+                <div className="col-span-full p-8 text-center text-text-muted glass-panel rounded-lg border-l-4 border-l-text-muted">No hay madres registradas.</div>
               ) : mothers.map(m => (
                 <ItemCard 
                   key={m.id} id={m.id} title={m.strain} icon={Dna}
@@ -199,7 +199,7 @@ export default function Genetics() {
             
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5 flex-1 content-start">
               {clones.length === 0 ? (
-                <div className="col-span-full p-8 text-center text-text-muted border border-dashed border-border rounded-lg h-fit">No hay lotes de esquejes.</div>
+                <div className="col-span-full p-8 text-center text-text-muted glass-panel rounded-lg h-fit border-l-4 border-l-text-muted">No hay lotes de esquejes.</div>
               ) : clones.map(c => (
                 <ItemCard 
                   key={c.id} id={c.id} title={`${c.quantity} Esquejes`} icon={Scissors}
@@ -233,7 +233,7 @@ export default function Genetics() {
             
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5 flex-1 content-start">
               {pollen.length === 0 ? (
-                <div className="col-span-full p-8 text-center text-text-muted border border-dashed border-border rounded-lg h-fit">El banco de polen está vacío.</div>
+                <div className="col-span-full p-8 text-center text-text-muted glass-panel rounded-lg h-fit border-l-4 border-l-text-muted">El banco de polen está vacío.</div>
               ) : pollen.map(p => (
                 <ItemCard 
                   key={p.id} id={p.id} title={p.strain} icon={Wind}
@@ -264,7 +264,7 @@ export default function Genetics() {
             
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5 flex-1 content-start">
               {crosses.length === 0 ? (
-                <div className="col-span-full p-8 flex flex-col items-center justify-center text-center text-text-muted border border-dashed border-border rounded-lg h-full">
+                <div className="col-span-full p-8 flex flex-col items-center justify-center text-center text-text-muted glass-panel rounded-lg h-full border-l-4 border-l-text-muted">
                   <Beaker className="w-12 h-12 mb-4 text-text-muted/50" />
                   No has registrado ningún cruce todavía.
                 </div>
@@ -303,7 +303,7 @@ export default function Genetics() {
             
             <div className="flex-1 bg-background/50 border border-border rounded-xl p-8 overflow-y-auto">
               {crosses.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-text-muted">
+                <div className="h-full flex flex-col items-center justify-center text-center text-text-muted glass-panel rounded-lg border-l-4 border-l-text-muted p-8">
                   <GitMerge className="w-16 h-16 mb-4 text-text-muted/30" />
                   <p className="text-lg">No hay cruces registrados para trazar.</p>
                 </div>
@@ -316,7 +316,7 @@ export default function Genetics() {
                     const pol = pollen.find(p => p.id === crs.maleId);
                     
                     return (
-                      <div key={crs.id} className="relative p-8 bg-card border border-border/50 rounded-2xl shadow-xl">
+                      <div key={crs.id} className="relative p-8 glass-panel rounded-2xl shadow-xl border-l-4 border-l-purple-500">
                         <h3 className="text-xl font-bold text-white mb-8 border-b border-white/10 pb-4 text-center">
                           <span className="text-purple-400 font-mono text-sm mr-2">{crs.id}</span>
                           Cepa Final: {crs.newStrainName}
