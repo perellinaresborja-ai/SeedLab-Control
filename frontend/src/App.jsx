@@ -12,11 +12,13 @@ import Tasks from "./pages/Tasks";
 import Sales from "./pages/Sales";
 import Login from "./pages/Login";
 import Logistics from "./pages/Logistics";
-import { AppProvider } from "./context/AppContext";
+import { AppProvider, useAppContext } from './context/AppContext';
+import { SecurityGuard } from './components/SecurityGuard';
 
 function App() {
   return (
-    <AppProvider>
+    <SecurityGuard>
+      <AppProvider>
         <Router>
           <Routes>
             {/* Protected System Routes */}
@@ -39,6 +41,7 @@ function App() {
           </Routes>
         </Router>
       </AppProvider>
+    </SecurityGuard>
   );
 }
 
