@@ -74,7 +74,7 @@ export default function Tasks() {
             }) : null}
 
             {testsToReview.length === 0 && lowStockVarieties.length === 0 && (
-              <div className="glass-panel p-8 text-center border-dashed border-border flex flex-col items-center border-l-4 border-l-primary-green">
+              <div className="glass-panel p-8 text-center flex flex-col items-center border-l-4 border-l-primary-green">
                 <ShieldCheck className="w-10 h-10 text-primary-green/50 mb-3" />
                 <h3 className="text-sm font-bold text-white">All Clear</h3>
                 <p className="text-xs text-text-muted">No pending system alerts.</p>
