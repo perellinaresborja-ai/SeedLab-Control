@@ -20,6 +20,35 @@
   }
 }
 
+@media print {
+  html, body {
+    width: 50mm !important;
+    height: 25mm !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  #root {
+    display: none !important;
+  }
+  #print-root {
+    display: flex !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50mm; /* typical small thermal label width */
+    height: 25mm; /* typical small thermal label height */
+    padding: 0;
+    margin: 0;
+    background: white;
+  }
+  @page {
+    size: 50mm 25mm;
+    margin: 0;
+  }
+}
+
 /* Custom scrollbar for webkit */
 ::-webkit-scrollbar {
   width: 8px;

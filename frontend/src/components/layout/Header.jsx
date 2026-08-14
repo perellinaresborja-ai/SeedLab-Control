@@ -1,15 +1,17 @@
-import { Bell, Search, UserCircle2, Globe, Check, LogOut } from "lucide-react";
+import { Bell, Search, UserCircle2, Globe, Check, LogOut, Settings, Network, ShieldCheck } from "lucide-react";
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppContext } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { TraceabilityExplorer } from '../TraceabilityExplorer';
 
 export function Header() {
-  const { batches, varieties, tests, currentUser, logout } = useAppContext();
+  const { batches, varieties, tests, currentUser, logout, isAuditMode, setIsAuditMode } = useAppContext();
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showExplorer, setShowExplorer] = useState(false);
   const searchRef = useRef(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(() => {
@@ -82,57 +84,23 @@ export function Header() {
   return (
     <header className="h-24 border-b border-border bg-card/30 backdrop-blur-lg flex items-center justify-between px-8 sticky top-0 z-10">
       <div className="flex items-center w-96 relative" ref={searchRef}>
-        <Search className="w-4 h-4 absolute left-3 text-text-muted" />
-        <input 
-          type="text" 
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowSearchResults(true);
-          }}
-          onFocus={() => setShowSearchResults(true)}
-          placeholder="Search..." 
-          className="w-full bg-background border border-border rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary-cyan focus:ring-1 focus:ring-primary-cyan/50 transition-all text-text-main placeholder:text-text-muted/50"
-        />
-        <AnimatePresence>
-          {showSearchResults && searchQuery.trim() && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute top-full left-0 mt-2 w-full bg-[#0a192f] border border-border rounded-lg shadow-xl overflow-hidden z-50"
-            >
-              {searchResults.length === 0 ? (
-                <div className="p-4 text-center text-text-muted text-sm">No results found</div>
-              ) : (
-                <div className="max-h-80 overflow-y-auto">
-                  {searchResults.map((res, i) => (
-                    <div 
-                      key={i} 
-                      onClick={() => {
-                        setShowSearchResults(false);
-                        setSearchQuery("");
-                        navigate(res.path);
-                      }}
-                      className="p-3 border-b border-border/50 hover:bg-white/5 transition-colors cursor-pointer flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="text-sm text-white font-medium">{res.id}</p>
-                        <p className="text-xs text-text-muted">{res.name}</p>
-                      </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-card border border-border text-primary-cyan">
-                        {res.type}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Search bar removed per user request */}
       </div>
 
       <div className="flex items-center space-x-6">
+        <button onClick={() => setShowExplorer(true)} className="p-2 rounded-full hover:bg-white/5 text-primary-cyan transition-colors" title="Traceability Explorer">
+          <Network className="w-5 h-5" />
+        </button>
+        
+        <button 
+          onClick={() => setIsAuditMode(!isAuditMode)} 
+          className={`p-2 rounded-full transition-colors flex items-center space-x-2 px-3 border ${isAuditMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'hover:bg-white/5 text-text-muted border-transparent'}`} 
+          title="Toggle Auditor Mode"
+        >
+          <ShieldCheck className="w-5 h-5" />
+          {isAuditMode && <span className="text-xs font-bold uppercase tracking-wider hidden sm:block">Auditor Mode</span>}
+        </button>
+
         <div className="relative" ref={dropdownRef}>
           <button 
             className="relative text-text-muted hover:text-white transition-colors"
@@ -203,6 +171,15 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showExplorer && (
+          <TraceabilityExplorer 
+            initialQuery={searchQuery} 
+            onClose={() => setShowExplorer(false)} 
+          />
+        )}
+      </AnimatePresence>
     </header>
   );
 }

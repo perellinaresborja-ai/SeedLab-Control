@@ -5,18 +5,18 @@ import { useAppContext } from "../../context/AppContext";
 
 export function Sidebar() {
   const location = useLocation();
-  const { currentUser } = useAppContext();
+  const { currentUser, subscriptionTier } = useAppContext();
 
   const NAV_ITEMS = [
-    { name: "Dashboard", path: "/", icon: LayoutDashboard, roles: ["Admin", "Quality Manager", "Lab Technician"] },
-    { name: "Catalog", path: "/catalog", icon: Dna, roles: ["Admin", "Quality Manager", "Lab Technician"] },
-    { name: "Genetics Engine", path: "/genetics", icon: Network, roles: ["Admin", "Quality Manager", "Lab Technician"] },
-    { name: "Inventory", path: "/inventory", icon: Package, roles: ["Admin", "Quality Manager", "Lab Technician"] },
-    { name: "Germination Test", path: "/lab", icon: Beaker, roles: ["Admin", "Quality Manager", "Lab Technician"] },
-    { name: "Sales & Invoicing", path: "/sales", icon: Receipt, roles: ["Admin", "Quality Manager"] },
-    { name: "Logistics & Shipping", path: "/logistics", icon: Truck, roles: ["Admin", "Quality Manager"] },
-    { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["Admin", "Quality Manager", "Lab Technician"] },
-    { name: "Settings", path: "/settings", icon: Settings, roles: ["Admin"] },
+    { name: "Dashboard", path: "/", icon: LayoutDashboard, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Catalog", path: "/catalog", icon: Dna, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Genetics Engine", path: "/genetics", icon: Network, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Enterprise"] },
+    { name: "Inventory", path: "/inventory", icon: Package, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Germination Test", path: "/lab", icon: Beaker, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Producer", "Enterprise"] },
+    { name: "Sales & Invoicing", path: "/sales", icon: Receipt, roles: ["Admin", "Quality Manager"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Logistics & Shipping", path: "/logistics", icon: Truck, roles: ["Admin", "Quality Manager"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Settings", path: "/settings", icon: Settings, roles: ["Admin"], tiers: ["Lite", "Producer", "Enterprise"] },
   ];
 
   return (
@@ -28,6 +28,7 @@ export function Sidebar() {
       <nav className="flex-1 py-6 px-4 space-y-2">
         {NAV_ITEMS.map((item) => {
           if (item.roles && currentUser && !item.roles.includes(currentUser.role)) return null;
+          if (item.tiers && subscriptionTier && !item.tiers.includes(subscriptionTier)) return null;
           
           const isActive = location.pathname === item.path;
           return (

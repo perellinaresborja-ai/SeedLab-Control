@@ -18,6 +18,10 @@ export default function Lab() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   
+  const [showSignOffModal, setShowSignOffModal] = useState(false);
+  const [impactReport, setImpactReport] = useState(null);
+  const [qaPin, setQaPin] = useState('');
+  
   const activeTest = tests.find(t => t.id === activeTestId);
   const activeBatch = activeTest ? batches.find(b => b.id === activeTest.batch) : null;
   const [dailyCounts, setDailyCounts] = useState({});
@@ -61,10 +65,31 @@ export default function Lab() {
     }
   };
 
-  const handleSignOff = () => {
+  const handleSignOffClick = () => {
     if (activeTest) {
       handleSaveDraft();
-      finalizeTest(activeTest.id, calculateEngine(dailyCounts, activeTest.sampleSize).finalPct, calculateEngine(dailyCounts, activeTest.sampleSize).status);
+      setShowSignOffModal(true);
+    }
+  };
+
+  const handleSignOffSubmit = async (e) => {
+    e.preventDefault();
+    if (activeTest) {
+      try {
+        const report = await finalizeTest(
+          activeTest.id, 
+          calculateEngine(dailyCounts, activeTest.sampleSize).finalPct, 
+          calculateEngine(dailyCounts, activeTest.sampleSize).status,
+          qaPin
+        );
+        setShowSignOffModal(false);
+        setQaPin('');
+        if (report) {
+          setImpactReport(report);
+        }
+      } catch (err) {
+        alert(err.message);
+      }
     }
   };
 
@@ -196,7 +221,7 @@ export default function Lab() {
     let status = 'Review';
     if(finalPct >= 95) status = 'Excellent';
     else if(finalPct >= 90) status = 'Apto';
-    else if(finalPct < 85 && finalPct > 0) status = 'Blocked';
+    else if(finalPct < 85 && finalPct > 0) status = 'Rejected';
 
     return { finalPct, mgt, cvg, status };
   };
@@ -389,7 +414,7 @@ export default function Lab() {
                   >
                     Generar Certificado
                   </button>
-                  <button onClick={handleSignOff} disabled={activeTest.status === 'Completed'} className="flex-1 md:flex-none tech-button bg-primary-cyan text-black hover:bg-primary-cyan/90 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button onClick={handleSignOffClick} disabled={activeTest.status === 'Completed'} className="flex-1 md:flex-none tech-button bg-primary-cyan text-black hover:bg-primary-cyan/90 disabled:opacity-50 disabled:cursor-not-allowed">
                     {activeTest.status === 'Completed' ? 'Signed & Authorized' : 'Sign & Authorize'}
                   </button>
                 </div>
@@ -478,6 +503,82 @@ export default function Lab() {
 
               <div className="flex-1 bg-gray-500/10 p-4">
                 <iframe src={pdfBlobUrl} className="w-full h-full rounded shadow-lg bg-white" title="PDF Preview" />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      
+      {/* Sign Off Modal (Dual Approval) */}
+      <AnimatePresence>
+        {showSignOffModal && activeTest && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-primary-cyan/50 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+              <div className="p-5 border-b border-primary-cyan/30 flex justify-between items-center bg-primary-cyan/10">
+                <h3 className="text-lg font-bold text-primary-cyan flex items-center"><FileSignature className="w-5 h-5 mr-2"/> QA Authorization</h3>
+                <button onClick={() => setShowSignOffModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
+              </div>
+              <form onSubmit={handleSignOffSubmit} className="p-6">
+                <p className="text-sm text-text-muted mb-4">
+                  By signing off, you lock this test report immutably. If the result is 'Rejected', the system will automatically quarantine affected inventory and trigger webhooks to halt sales.
+                </p>
+                <div className="mb-6">
+                  <label className="block text-xs font-medium text-text-muted mb-1">QA Authorization PIN *</label>
+                  <input required type="password" placeholder="e.g. 0000" value={qaPin} onChange={e=>setQaPin(e.target.value)} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none text-center tracking-[0.5em] font-mono text-lg" />
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button type="button" onClick={() => setShowSignOffModal(false)} className="px-4 py-2 rounded text-text-muted hover:bg-border transition-colors">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded bg-primary-cyan text-black font-medium hover:bg-primary-cyan/90 transition-colors">Confirm & Lock</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Quarantine Impact Report Modal */}
+      <AnimatePresence>
+        {impactReport && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-red-900/40 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-background border border-red-500/50 rounded-xl shadow-2xl shadow-red-500/20 w-full max-w-lg overflow-hidden">
+              <div className="p-5 border-b border-red-500/30 bg-red-500/10 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-red-500 flex items-center"><ShieldCheck className="w-5 h-5 mr-2"/> Automated Immune Response Triggered</h3>
+                <button onClick={() => setImpactReport(null)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
+              </div>
+              <div className="p-6 space-y-6">
+                <p className="text-sm text-text-muted">
+                  The OOS lab result triggered SeedLab's Cross-Module Integrity engine. Downstream entities have been immediately quarantined.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-black/50 border border-border rounded p-4">
+                    <div className="text-xs text-text-muted mb-1">Batches Locked</div>
+                    <div className="text-2xl font-bold text-red-400">{impactReport.batches?.length || 0}</div>
+                  </div>
+                  <div className="bg-black/50 border border-border rounded p-4">
+                    <div className="text-xs text-text-muted mb-1">Financial Risk Prevented</div>
+                    <div className="text-2xl font-bold text-red-400">${impactReport.totalRiskValue?.toFixed(2) || '0.00'}</div>
+                  </div>
+                </div>
+
+                {impactReport.firedWebhooks && impactReport.firedWebhooks.length > 0 && (
+                  <div className="bg-black/50 border border-border rounded p-4">
+                    <h4 className="text-sm font-bold text-white mb-2">B2B E-Commerce Action</h4>
+                    <p className="text-xs text-text-muted mb-3">API webhooks fired to immediately pull stock from external sales channels.</p>
+                    <div className="space-y-2">
+                      {impactReport.firedWebhooks.map(wh => (
+                        <div key={wh.id} className="text-xs font-mono bg-background p-2 border border-border/50 rounded flex justify-between">
+                          <span className="text-primary-cyan">{wh.endpoint}</span>
+                          <span className="text-primary-green">200 OK</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 flex justify-end">
+                  <button onClick={() => setImpactReport(null)} className="px-4 py-2 rounded bg-red-500/20 text-red-400 font-medium hover:bg-red-500/30 transition-colors border border-red-500/50">Close Report</button>
+                </div>
               </div>
             </motion.div>
           </div>

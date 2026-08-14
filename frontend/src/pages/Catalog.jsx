@@ -10,7 +10,7 @@ export default function Catalog() {
   const [selectedVariety, setSelectedVariety] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', code: '', date: new Date().toISOString().split('T')[0], breeder: '', type: 'Feminized', description: '', minStock: '', image: null, mother: '', father: '' });
+  const [formData, setFormData] = useState({ name: '', code: '', date: new Date().toISOString().split('T')[0], breeder: '', type: 'Feminized', description: '', minStock: '', image: null, mother: '', father: '', thc: '', cbd: '', terpenes: '' });
   const [editFormData, setEditFormData] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -95,10 +95,13 @@ export default function Catalog() {
       image: formData.image,
       mother: formData.mother || null,
       father: formData.father || null,
+      thc: formData.thc,
+      cbd: formData.cbd,
+      terpenes: formData.terpenes,
       status: 'Active'
     });
     setShowAddModal(false);
-    setFormData({ name: '', code: '', date: new Date().toISOString().split('T')[0], breeder: '', type: 'Feminized', description: '', minStock: '', image: null, mother: '', father: '' });
+    setFormData({ name: '', code: '', date: new Date().toISOString().split('T')[0], breeder: '', type: 'Feminized', description: '', minStock: '', image: null, mother: '', father: '', thc: '', cbd: '', terpenes: '' });
   };
 
   const handleEditSubmit = (e) => {
@@ -111,7 +114,10 @@ export default function Catalog() {
       minStock: parseInt(editFormData.minStock) || 0,
       image: editFormData.image,
       mother: editFormData.mother || null,
-      father: editFormData.father || null
+      father: editFormData.father || null,
+      thc: editFormData.thc,
+      cbd: editFormData.cbd,
+      terpenes: editFormData.terpenes
     });
     setSelectedVariety(prev => ({ ...prev, ...editFormData, minStock: parseInt(editFormData.minStock) || 0 }));
     setShowEditModal(false);
@@ -231,7 +237,32 @@ export default function Catalog() {
                   <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2">Technical Profile</h3>
                   <p className="text-text-main text-sm leading-relaxed bg-background p-4 rounded-lg border border-border/30">{selectedVariety.description}</p>
                 </div>
-
+                
+                {(selectedVariety.thc || selectedVariety.cbd || selectedVariety.terpenes) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2 flex items-center"><Dna className="w-4 h-4 mr-2 text-primary-cyan"/> Chemotype & COA Profile</h3>
+                    <div className="grid grid-cols-4 gap-4">
+                      {selectedVariety.thc && (
+                        <div className="bg-background rounded-lg p-3 border border-border/50 text-center col-span-1">
+                          <p className="text-xs text-text-muted mb-1">THC</p>
+                          <p className="text-lg font-bold text-white">{selectedVariety.thc}%</p>
+                        </div>
+                      )}
+                      {selectedVariety.cbd && (
+                        <div className="bg-background rounded-lg p-3 border border-border/50 text-center col-span-1">
+                          <p className="text-xs text-text-muted mb-1">CBD</p>
+                          <p className="text-lg font-bold text-white">{selectedVariety.cbd}%</p>
+                        </div>
+                      )}
+                      {selectedVariety.terpenes && (
+                        <div className="bg-background rounded-lg p-3 border border-border/50 text-center col-span-2">
+                          <p className="text-xs text-text-muted mb-1">Dominant Terpenes</p>
+                          <p className="text-sm font-bold text-white truncate" title={selectedVariety.terpenes}>{selectedVariety.terpenes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-6">
                   <div>
@@ -341,7 +372,26 @@ export default function Catalog() {
                   <label className="block text-xs font-medium text-text-muted mb-1">Technical Description</label>
                   <textarea rows="3" value={formData.description} onChange={e=>setFormData({...formData, description: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none"></textarea>
                 </div>
-                <div>
+
+                <div className="grid grid-cols-4 gap-4 border-t border-border/50 pt-4">
+                  <div className="col-span-4">
+                    <h4 className="text-sm font-bold text-white flex items-center"><Dna className="w-4 h-4 mr-2 text-primary-cyan"/> Chemotype (COA)</h4>
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-medium text-text-muted mb-1">% THC</label>
+                    <input type="number" step="0.01" value={formData.thc} onChange={e=>setFormData({...formData, thc: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-medium text-text-muted mb-1">% CBD</label>
+                    <input type="number" step="0.01" value={formData.cbd} onChange={e=>setFormData({...formData, cbd: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-text-muted mb-1">Terpenes</label>
+                    <input type="text" placeholder="Myrcene, Pinene..." value={formData.terpenes} onChange={e=>setFormData({...formData, terpenes: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                  </div>
+                </div>
+
+                <div className="border-t border-border/50 pt-4">
                   <label className="block text-xs font-medium text-text-muted mb-1">Variety Photo</label>
                   <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, false)} className="w-full bg-background border border-border rounded p-1.5 text-sm text-text-muted file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-cyan/10 file:text-primary-cyan hover:file:bg-primary-cyan/20 cursor-pointer" />
                 </div>
@@ -393,7 +443,26 @@ export default function Catalog() {
                   <label className="block text-xs font-medium text-text-muted mb-1">Technical Description</label>
                   <textarea rows="3" value={editFormData.description} onChange={e=>setEditFormData({...editFormData, description: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none"></textarea>
                 </div>
-                <div>
+                
+                <div className="grid grid-cols-4 gap-4 border-t border-border/50 pt-4">
+                  <div className="col-span-4">
+                    <h4 className="text-sm font-bold text-white flex items-center"><Dna className="w-4 h-4 mr-2 text-primary-cyan"/> Chemotype (COA)</h4>
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-medium text-text-muted mb-1">% THC</label>
+                    <input type="number" step="0.01" value={editFormData.thc} onChange={e=>setEditFormData({...editFormData, thc: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-medium text-text-muted mb-1">% CBD</label>
+                    <input type="number" step="0.01" value={editFormData.cbd} onChange={e=>setEditFormData({...editFormData, cbd: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-text-muted mb-1">Terpenes</label>
+                    <input type="text" placeholder="Myrcene, Pinene..." value={editFormData.terpenes} onChange={e=>setEditFormData({...editFormData, terpenes: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                  </div>
+                </div>
+
+                <div className="border-t border-border/50 pt-4">
                   <label className="block text-xs font-medium text-text-muted mb-1">Update Photo</label>
                   <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, true)} className="w-full bg-background border border-border rounded p-1.5 text-sm text-text-muted file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-cyan/10 file:text-primary-cyan hover:file:bg-primary-cyan/20 cursor-pointer" />
                 </div>

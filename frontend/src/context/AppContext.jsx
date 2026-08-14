@@ -17,10 +17,38 @@ export function AppProvider({ children }) {
   const [auditLogs, setAuditLogs] = useState(() => JSON.parse(localStorage.getItem('seedlab_logs')) || []);
   const [customTasks, setCustomTasks] = useState(() => JSON.parse(localStorage.getItem('seedlab_tasks')) || []);
   const [users, setUsers] = useState(() => JSON.parse(localStorage.getItem('seedlab_users')) || []);
-  const [companyProfile, setCompanyProfile] = useState(() => JSON.parse(localStorage.getItem('seedlab_company')) || {});
+  const [companyProfile, setCompanyProfile] = useState(() => JSON.parse(localStorage.getItem('seedlab_company')) || { costPerSeed: 0.50 });
   const [clients, setClients] = useState(() => JSON.parse(localStorage.getItem('seedlab_clients')) || []);
   const [invoices, setInvoices] = useState(() => JSON.parse(localStorage.getItem('seedlab_invoices')) || []);
+  const [facilities, setFacilities] = useState(() => {
+    try {
+      const localString = localStorage.getItem('seedlab_facilities');
+      if (localString) {
+        const local = JSON.parse(localString);
+        if (Array.isArray(local) && local.length > 0) return local;
+      }
+    } catch (e) {
+      console.error('Error reading facilities from localStorage', e);
+    }
+    return [
+      'HQ / Main Vault / A1',
+      'HQ / Cold Storage / Fridge 1',
+      'HQ / Quarantine Area'
+    ];
+  });
+  const [webhookLogs, setWebhookLogs] = useState(() => JSON.parse(localStorage.getItem('seedlab_webhooks')) || []);
   
+  // Feature Flags / Modular Licensing
+  const [subscriptionTier, setSubscriptionTier] = useState(() => {
+    return localStorage.getItem('seedlab_tier') || 'Enterprise';
+  });
+
+  const [isAuditMode, setIsAuditMode] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('seedlab_tier', subscriptionTier);
+  }, [subscriptionTier]);
+
   // Genetics Engine States
   const [origins, setOrigins] = useState(() => JSON.parse(localStorage.getItem('seedlab_origins')) || [
     { id: 'ORG-1001', name: 'Amnesia Haze Original', type: 'Strain Hunter (Wild)', date: '2025-01-15' }
@@ -153,7 +181,9 @@ export function AppProvider({ children }) {
     saveToLocal('seedlab_pollen', pollen);
     saveToLocal('seedlab_crosses', crosses);
     saveToLocal('seedlab_cultivation_logs', cultivationLogs);
-  }, [varieties, batches, tests, auditLogs, customTasks, users, companyProfile, clients, invoices, origins, mothers, clones, pollen, crosses, cultivationLogs, currentUser]);
+    saveToLocal('seedlab_facilities', facilities);
+    saveToLocal('seedlab_webhooks', webhookLogs);
+  }, [varieties, batches, tests, auditLogs, customTasks, users, companyProfile, clients, invoices, origins, mothers, clones, pollen, crosses, cultivationLogs, facilities, webhookLogs, currentUser]);
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -188,7 +218,7 @@ export function AppProvider({ children }) {
     await supabase.from('company_profile').update({
       name: data.name, address: data.address, email: data.email, tax_id: data.taxId, logo: data.logo
     }).eq('id', 1);
-    addAuditLog('Updated Config', 'Company Profile', 'Modified white-label settings');
+    addAuditLog('Updated Config', 'Company Profile', 'Modified white-label and financial settings');
   };
 
   const addUser = async (userData) => {
@@ -236,6 +266,9 @@ export function AppProvider({ children }) {
       image: variety.image,
       mother: variety.mother || null,
       father: variety.father || null,
+      thc: variety.thc || '',
+      cbd: variety.cbd || '',
+      terpenes: variety.terpenes || '',
       avg_viability: 0,
       active_batches: 0,
       min_stock: parseInt(variety.minStock) || 0,
@@ -245,7 +278,7 @@ export function AppProvider({ children }) {
     };
     
     // UI mapping
-    const uiVariety = {...newVariety, id: customId, avgViability: 0, activeBatches: 0, minStock: newVariety.min_stock, salesHistory: newVariety.sales_history, yearlySales: newVariety.yearly_sales};
+    const uiVariety = {...newVariety, id: customId, avgViability: 0, activeBatches: 0, minStock: newVariety.min_stock, salesHistory: newVariety.sales_history, yearlySales: newVariety.yearly_sales, thc: newVariety.thc, cbd: newVariety.cbd, terpenes: newVariety.terpenes};
     setVarieties(prev => {
       const updated = [uiVariety, ...prev];
       return updated.sort((a,b) => a.name.localeCompare(b.name));
@@ -274,6 +307,9 @@ export function AppProvider({ children }) {
     if (updates.image !== undefined) dbUpdates.image = updates.image;
     if (updates.mother !== undefined) dbUpdates.mother = updates.mother;
     if (updates.father !== undefined) dbUpdates.father = updates.father;
+    if (updates.thc !== undefined) dbUpdates.thc = updates.thc;
+    if (updates.cbd !== undefined) dbUpdates.cbd = updates.cbd;
+    if (updates.terpenes !== undefined) dbUpdates.terpenes = updates.terpenes;
     
     await supabase.from('varieties').update(dbUpdates).eq('custom_id', id);
     addAuditLog('Updated Variety', id, `Modified genetic profile`);
@@ -324,20 +360,27 @@ export function AppProvider({ children }) {
     addAuditLog('Received Batch', customId, `Intake of ${newBatch.initial_qty} seeds. Location: ${newBatch.location}`);
   };
 
-  const adjustBatchStock = async (batchId, change, reason, witness = null) => {
+  const adjustBatchStock = async (batchId, change, reason, witness = null, reasonCategory = 'General') => {
     const numChange = parseInt(change);
     const batch = batches.find(b => b.id === batchId);
     if (!batch) return;
     
-    const newQty = batch.currentQty + numChange;
     const isDestruction = witness !== null;
+
+    // GACP/GMP BLOCK: Status Enforcement
+    if ((batch.status === 'Quarantined' || batch.status === 'Rejected') && numChange < 0 && !isDestruction) {
+      throw new Error(`GACP GMP Violation: Cannot deduct stock from a ${batch.status} batch unless it is a Destruction protocol.`);
+    }
+    
+    const newQty = batch.currentQty + numChange;
+    const lostValue = isDestruction ? Math.abs(numChange) * (companyProfile.costPerSeed || 0.50) : 0;
     
     // GACP ledger requirement
     const newLedgerEntry = { 
       date: new Date().toISOString().split('T')[0], 
       user: currentUser?.name || 'SYSTEM', 
       change: numChange, 
-      reason: isDestruction ? `[GACP DESTRUCTION] ${reason} (Witness: ${witness})` : reason 
+      reason: isDestruction ? `[GACP DESTRUCTION: ${reasonCategory}] ${reason} (Witness: ${witness}) - COGS Impact: $${lostValue.toFixed(2)}` : reason 
     };
     const newLedger = [newLedgerEntry, ...(batch.ledger || [])];
     
@@ -351,6 +394,20 @@ export function AppProvider({ children }) {
     setBatches(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
     await supabase.from('batches').update({ status: newStatus }).eq('custom_id', id);
     addAuditLog('Updated Status', id, `Changed to ${newStatus}`);
+  };
+
+  const releaseBatch = async (batchId, qaPin) => {
+    if (qaPin !== '0000') throw new Error('Invalid QA PIN for release');
+    
+    const batch = batches.find(b => b.id === batchId);
+    if (!batch) return;
+
+    if (batch.status !== 'Quarantined') {
+       throw new Error('Only Quarantined batches can be released via QA workflow.');
+    }
+
+    await updateBatchStatus(batchId, 'Apto');
+    addAuditLog('QA Batch Release', batchId, `Batch released from Quarantine by QA override. Approver: ${currentUser?.name || 'QA Admin'}`);
   };
 
   const updateBatch = async (id, updates) => {
@@ -406,16 +463,32 @@ export function AppProvider({ children }) {
     await supabase.from('tests').update(dbUpdates).eq('custom_id', testId);
   };
 
-  const finalizeTest = async (testId, finalPct, status) => {
+  const finalizeTest = async (testId, finalPct, status, qaPin) => {
+    const test = tests.find(t => t.id === testId);
+    if (!test) return;
+
+    // GACP/GMP BLOCK: Segregation of Duties
+    if (test.technician === currentUser?.name) {
+       throw new Error(`GMP Violation: Segregation of Duties. The technician who initiated the test (${test.technician}) cannot be the one to approve and finalize it.`);
+    }
+    if (!qaPin || qaPin !== '0000') {
+       throw new Error(`Invalid QA PIN. Dual Approval required.`);
+    }
+
     setTests(prev => prev.map(t => t.id === testId ? { ...t, status: 'Completed', finalPct } : t));
-    
     await supabase.from('tests').update({ status: 'Completed', final_pct: finalPct }).eq('custom_id', testId);
     
-    const test = tests.find(t => t.id === testId);
-    if(test) {
-      await updateBatchStatus(test.batch, status);
-      addAuditLog('Test Finalized', testId, `Signed off with ${finalPct}%. Batch status auto-set to ${status}.`);
+    // Cross-Module Integrity: If Rejected, trigger Cascading Quarantine automatically
+    let impactReport = null;
+    if (status === 'Rejected') {
+       addAuditLog('OOS Result', testId, `Out of Specification (${finalPct}%). Auto-triggering Cascading Quarantine on Batch ${test.batch}`);
+       impactReport = await executeCascadingQuarantine(test.batch, `OOS Lab Test Result (${finalPct}%)`, qaPin);
+    } else {
+       await updateBatchStatus(test.batch, status);
+       addAuditLog('Test Finalized', testId, `Signed off with ${finalPct}%. QA Approved by ${currentUser?.name || 'QA Admin'}. Batch status auto-set to ${status}.`);
     }
+    
+    return impactReport;
   };
 
   const addClient = async (client) => {
@@ -457,6 +530,13 @@ export function AppProvider({ children }) {
     setInvoices(prev => [uiInvoice, ...prev]);
     
     if (invoice.type === 'Factura' || invoice.type === 'Albarán') {
+      // GACP/GMP BLOCK: Check statuses before allowing invoice
+      for (const item of invoiceItems) {
+        const batch = batches.find(b => b.id === item.batchId);
+        if (batch && batch.status !== 'Apto') {
+           throw new Error(`GMP Violation: Batch ${item.batchId} is not 'Apto' (Current Status: ${batch.status}). Cannot process sale.`);
+        }
+      }
       for (const item of invoiceItems) {
         await adjustBatchStock(item.batchId, -item.quantity, `Sale - ${customId}`);
       }
@@ -538,6 +618,109 @@ export function AppProvider({ children }) {
     addAuditLog('Cultivation Log', log.entityId, `Applied ${log.type}: ${log.product} (${log.dose}) by ${log.operator}`);
   };
 
+  // Phase 3: Actionable Genealogy 360 & Recalls
+  const runImpactAnalysis = (entityId) => {
+    // Finds downstream affected entities.
+    // 1. If Mother -> find clones
+    const affectedClones = clones.filter(c => c.motherId === entityId);
+    
+    // 2. Clones or Mother -> find Crosses
+    const affectedCrosses = crosses.filter(c => 
+      c.femaleId === entityId || 
+      c.maleId === entityId || 
+      affectedClones.some(cln => cln.id === c.femaleId)
+    );
+    
+    // 3. Find Varieties created from these crosses
+    // (Our simple model: cross.newStrainName maps to variety)
+    const affectedVarieties = varieties.filter(v => 
+      affectedCrosses.some(c => c.newStrainName === v.name) ||
+      v.mother === entityId ||
+      v.father === entityId ||
+      affectedClones.some(cln => cln.id === v.mother)
+    );
+    
+    // 4. Find Batches of these varieties
+    const affectedBatches = batches.filter(b => 
+      affectedVarieties.some(v => v.name === b.variety) || b.id === entityId
+    );
+    
+    // 5. Find Invoices containing these batches -> Recalls
+    const affectedInvoices = invoices.filter(inv => 
+      inv.items.some(item => affectedBatches.some(b => b.id === item.batchId))
+    );
+    
+    // 6. Map to Clients
+    const affectedClientsMap = new Map();
+    affectedInvoices.forEach(inv => {
+      const client = clients.find(c => c.id === inv.clientId);
+      if (client) {
+        if (!affectedClientsMap.has(client.id)) affectedClientsMap.set(client.id, { client, invoices: [] });
+        affectedClientsMap.get(client.id).invoices.push(inv);
+      }
+    });
+
+    return {
+      clones: affectedClones,
+      crosses: affectedCrosses,
+      varieties: affectedVarieties,
+      batches: affectedBatches,
+      invoices: affectedInvoices,
+      clients: Array.from(affectedClientsMap.values())
+    };
+  };
+
+  const executeCascadingQuarantine = async (entityId, reason, qaPin) => {
+    if (!qaPin || qaPin !== '0000') {
+      throw new Error('Invalid QA PIN. GxP Dual Approval required for Cascading Quarantines.');
+    }
+
+    const impact = runImpactAnalysis(entityId);
+    let totalRiskValue = 0;
+    const firedWebhooks = [];
+    
+    // Quarantine all affected batches
+    const updatedBatches = batches.map(b => {
+      if (impact.batches.some(ab => ab.id === b.id) && b.status !== 'Quarantined') {
+        const batchValue = b.currentQty * (companyProfile.costPerSeed || 0.50);
+        totalRiskValue += batchValue;
+
+        const newLedgerEntry = { 
+          date: new Date().toISOString().split('T')[0], 
+          user: currentUser?.name || 'QA SYSTEM', 
+          change: 0, 
+          reason: `[GACP CASCADING QUARANTINE] Root cause in ${entityId}: ${reason}`
+        };
+        const newLedger = [newLedgerEntry, ...(b.ledger || [])];
+        
+        // Push update to DB
+        supabase.from('batches').update({ status: 'Quarantined', ledger: newLedger }).eq('custom_id', b.id).then();
+        addAuditLog('Cascading Quarantine', b.id, `Triggered by ${entityId}`);
+        
+        // Fire simulated webhook
+        const whLog = {
+          id: `WH-${Date.now()}-${Math.floor(Math.random()*10000)}`,
+          timestamp: new Date().toISOString(),
+          endpoint: 'POST /api/ecommerce/update_stock',
+          payload: { batchId: b.id, stock: 0, status: 'Quarantined', reason: 'Cross-Module Integrity Lock' },
+          status: '200 OK'
+        };
+        firedWebhooks.push(whLog);
+
+        return { ...b, status: 'Quarantined', ledger: newLedger };
+      }
+      return b;
+    });
+    
+    if (firedWebhooks.length > 0) {
+       setWebhookLogs(prev => [...firedWebhooks, ...prev]);
+    }
+    
+    setBatches(updatedBatches);
+    addAuditLog('Emergency Protocol Executed', entityId, `Cascading quarantine applied to ${impact.batches.length} batches. Financial Risk Blocked: $${totalRiskValue.toFixed(2)}`);
+    return { ...impact, totalRiskValue, firedWebhooks };
+  };
+
   return (
     <AppContext.Provider value={{
       authLoading,
@@ -555,8 +738,13 @@ export function AppProvider({ children }) {
       clones, addCloneBatch,
       pollen, addPollen,
       crosses, addCross,
-      updateBatch,
-      cultivationLogs, addCultivationLog
+      updateBatch, releaseBatch,
+      cultivationLogs, addCultivationLog,
+      subscriptionTier, setSubscriptionTier,
+      isAuditMode, setIsAuditMode,
+      facilities, setFacilities,
+      webhookLogs, setWebhookLogs,
+      runImpactAnalysis, executeCascadingQuarantine
     }}>
       {children}
     </AppContext.Provider>
