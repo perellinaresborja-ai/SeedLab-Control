@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext';
 import { ItemCard } from '../components/ui/ItemCard';
 
 export default function Logistics() {
-  const { invoices, clients } = useAppContext();
+  const { invoices, clients, qualityAgreements } = useAppContext();
   
   // Create mock shipments state derived from invoices initially
   const [shipments, setShipments] = useState([]);
@@ -13,26 +13,71 @@ export default function Logistics() {
 
   useEffect(() => {
     // Generate mock shipments from actual invoices
-    if (invoices.length > 0 && shipments.length === 0) {
-      const mockShipments = invoices.filter(inv => inv.type !== 'Proforma').map(inv => {
-        const client = clients.find(c => c.id === inv.clientId) || { name: 'Unknown Client', address: 'Unknown Address' };
-        return {
-          id: `SHP-${inv.id}`,
-          invoiceId: inv.id,
-          clientName: client.name,
-          destination: client.address,
-          date: inv.date,
+    if (shipments.length === 0) {
+      let mockShipments = [];
+      if (invoices.length > 0) {
+        mockShipments = invoices.filter(inv => inv.type !== 'Proforma').map(inv => {
+          const client = clients.find(c => c.id === inv.clientId) || { name: 'Unknown Client', address: 'Unknown Address' };
+          return {
+            id: `SHP-${inv.id}`,
+            invoiceId: inv.id,
+            clientId: inv.clientId,
+            clientName: client.name,
+            destination: client.address,
+            date: inv.date,
+            status: 'Pending',
+            agency: 'GLS',
+            trackingNumber: null,
+            dataLoggerId: '',
+            tamperSealId: '',
+            weight: (Math.random() * 5 + 0.5).toFixed(1) // Random weight for demo
+          };
+        });
+      }
+      
+      // Inject a test shipment if none exist, tied to CLI-0001 (which has the strict QA agreement)
+      if (mockShipments.length === 0) {
+        mockShipments = [{
+          id: `SHP-DEMO-999`,
+          invoiceId: 'INV-DEMO-999',
+          clientId: 'CLI-0001',
+          clientName: 'Tigre Uno (Enterprise Client)',
+          destination: '123 Pharma Blvd, Zurich, Switzerland',
+          date: new Date().toISOString().split('T')[0],
           status: 'Pending',
           agency: 'GLS',
           trackingNumber: null,
-          weight: (Math.random() * 5 + 0.5).toFixed(1) // Random weight for demo
-        };
-      });
+          dataLoggerId: '',
+          tamperSealId: '',
+          weight: '25.0'
+        }];
+      }
+      
       setShipments(mockShipments);
     }
   }, [invoices, clients, shipments.length]);
 
   const handleGenerateLabel = (id) => {
+    const shipment = shipments.find(s => s.id === id);
+    if (!shipment) return;
+
+    // Logistics Quality Gate
+    const qa = qualityAgreements.find(q => q.clientId === shipment.clientId);
+    if (qa) {
+      if (qa.requiresColdChain && !['DHL Cold Chain', 'FedEx TempControl'].includes(shipment.agency)) {
+        alert(`Quality Gate Blocked:\nThis client requires a Cold Chain certified carrier (Max Temp: ${qa.maxTransportTemp}°C).`);
+        return;
+      }
+      if (qa.requiresDataLogger && !shipment.dataLoggerId) {
+        alert(`Quality Gate Blocked:\nData Logger ID is required to guarantee temperature traceability.`);
+        return;
+      }
+      if (qa.requiresTamperSeal && !shipment.tamperSealId) {
+        alert(`Quality Gate Blocked:\nTamper Seal ID is required to guarantee package integrity.`);
+        return;
+      }
+    }
+
     // Start loading animation for this specific shipment
     setLoadingIds(prev => [...prev, id]);
 
@@ -40,7 +85,7 @@ export default function Logistics() {
     setTimeout(() => {
       setShipments(prev => prev.map(s => {
         if (s.id === id) {
-          const agencies = { 'GLS': 'GLS', 'DHL': 'DHL', 'UPS': 'UPS' };
+          const agencies = { 'GLS': 'GLS', 'DHL': 'DHL', 'UPS': 'UPS', 'DHL Cold Chain': 'DHL-CC', 'FedEx TempControl': 'FDX-TC' };
           const prefix = agencies[s.agency] || 'TRK';
           const randomTracking = `${prefix}-${Math.floor(Math.random() * 90000000 + 10000000)}`;
           return {
@@ -55,8 +100,8 @@ export default function Logistics() {
     }, 1500);
   };
 
-  const updateAgency = (id, newAgency) => {
-    setShipments(prev => prev.map(s => s.id === id ? { ...s, agency: newAgency } : s));
+  const updateField = (id, field, value) => {
+    setShipments(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
   };
 
   const pendingCount = shipments.filter(s => s.status === 'Pending').length;
@@ -123,6 +168,46 @@ export default function Logistics() {
             </div>
           ) : shipments.map(shipment => {
             const isPending = shipment.status === 'Pending';
+            const qa = qualityAgreements.find(q => q.clientId === shipment.clientId);
+            
+            const shipmentFields = [
+              { label: 'Destination', value: <span className="truncate block max-w-[150px] text-xs" title={shipment.destination}>{shipment.destination}</span> },
+              { label: 'Carrier', value: isPending ? (
+                <select 
+                  value={shipment.agency}
+                  onChange={(e) => updateField(shipment.id, 'agency', e.target.value)}
+                  className="bg-background border border-border rounded px-1 py-0.5 text-xs text-white focus:border-primary-cyan focus:outline-none"
+                >
+                  <option value="GLS">GLS</option>
+                  <option value="DHL">DHL Express</option>
+                  <option value="UPS">UPS</option>
+                  <option value="DHL Cold Chain">DHL Cold Chain ❄️</option>
+                  <option value="FedEx TempControl">FedEx TempControl ❄️</option>
+                </select>
+              ) : <span className="font-bold">{shipment.agency}</span> },
+              { label: 'Weight', value: `${shipment.weight} kg` }
+            ];
+
+            if (qa?.requiresDataLogger) {
+              shipmentFields.push({
+                label: 'Data Logger ID',
+                value: isPending ? (
+                  <input type="text" placeholder="Scan Logger..." value={shipment.dataLoggerId} onChange={(e) => updateField(shipment.id, 'dataLoggerId', e.target.value)} className="w-full bg-background border border-orange-400/50 rounded px-1 py-0.5 text-xs text-white placeholder:text-text-muted/50" />
+                ) : <span className="text-orange-400 font-mono text-xs">{shipment.dataLoggerId}</span>
+              });
+            }
+
+            if (qa?.requiresTamperSeal) {
+              shipmentFields.push({
+                label: 'Tamper Seal ID',
+                value: isPending ? (
+                  <input type="text" placeholder="Scan Seal..." value={shipment.tamperSealId} onChange={(e) => updateField(shipment.id, 'tamperSealId', e.target.value)} className="w-full bg-background border border-primary-cyan/50 rounded px-1 py-0.5 text-xs text-white placeholder:text-text-muted/50" />
+                ) : <span className="text-primary-cyan font-mono text-xs">{shipment.tamperSealId}</span>
+              });
+            }
+
+            shipmentFields.push({ label: 'Tracking', value: isPending ? '-' : <span className="font-mono text-primary-cyan text-[10px] break-all">{shipment.trackingNumber}</span> });
+
             return (
               <ItemCard
                 key={shipment.id}
@@ -130,24 +215,9 @@ export default function Logistics() {
                 title={shipment.clientName}
                 icon={Truck}
                 borderColor={isPending ? 'border-l-orange-400' : 'border-l-primary-green'}
-                badgeText={isPending ? 'Pending Label' : 'Ready'}
-                badgeColor={isPending ? 'text-orange-400 bg-orange-400/10 border-orange-400/30' : 'text-primary-green bg-primary-green/10 border-primary-green/30'}
-                fields={[
-                  { label: 'Destination', value: <span className="truncate block max-w-[150px] text-xs" title={shipment.destination}>{shipment.destination}</span> },
-                  { label: 'Carrier', value: isPending ? (
-                    <select 
-                      value={shipment.agency}
-                      onChange={(e) => updateAgency(shipment.id, e.target.value)}
-                      className="bg-background border border-border rounded px-1 py-0.5 text-xs text-white focus:border-primary-cyan focus:outline-none"
-                    >
-                      <option value="GLS">GLS</option>
-                      <option value="DHL">DHL Express</option>
-                      <option value="UPS">UPS</option>
-                    </select>
-                  ) : <span className="font-bold">{shipment.agency}</span> },
-                  { label: 'Weight', value: `${shipment.weight} kg` },
-                  { label: 'Tracking', value: isPending ? '-' : <span className="font-mono text-primary-cyan text-[10px] break-all">{shipment.trackingNumber}</span> }
-                ]}
+                badgeText={isPending ? (qa?.requiresColdChain ? 'Cold Chain Required ❄️' : 'Pending Label') : 'Ready'}
+                badgeColor={isPending ? (qa?.requiresColdChain ? 'text-blue-400 bg-blue-400/10 border-blue-400/30' : 'text-orange-400 bg-orange-400/10 border-orange-400/30') : 'text-primary-green bg-primary-green/10 border-primary-green/30'}
+                fields={shipmentFields}
                 actions={
                   isPending ? (
                     <button 

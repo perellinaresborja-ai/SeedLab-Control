@@ -28,7 +28,7 @@ export default function Lab() {
   const [notes, setNotes] = useState('');
   
   // New test form state
-  const [formData, setFormData] = useState({ batch: '', sampleSize: 100, targetTemp: '22°C', method: 'Petri dish + paper' });
+  const [formData, setFormData] = useState({ batch: '', testType: 'Germination', sampleSize: 100, targetTemp: '22°C', method: 'Petri dish + paper', moisturePct: '', pathogenDetected: false });
 
   useEffect(() => {
     if (activeTest) {
@@ -184,11 +184,14 @@ export default function Lab() {
     if (!formData.batch) return;
     const newId = addTest({
       batch: formData.batch,
-      sampleSize: parseInt(formData.sampleSize),
+      testType: formData.testType,
+      sampleSize: parseInt(formData.sampleSize) || 100,
       targetTemp: formData.targetTemp,
       method: formData.method,
       technician: 'Dr. Sarah Chen',
-      startDate: new Date().toISOString().split('T')[0]
+      startDate: new Date().toISOString().split('T')[0],
+      moisturePct: formData.testType === 'Physical' ? parseFloat(formData.moisturePct) : null,
+      pathogenDetected: formData.testType === 'Pathogen' ? formData.pathogenDetected : false
     });
     
     // Set the new test as active so the user sees it immediately
@@ -197,7 +200,7 @@ export default function Lab() {
     });
     
     setShowNewTestModal(false);
-    setFormData({ batch: '', sampleSize: 100, targetTemp: '22°C', method: 'Petri dish + paper' });
+    setFormData({ batch: '', testType: 'Germination', sampleSize: 100, targetTemp: '22°C', method: 'Petri dish + paper', moisturePct: '', pathogenDetected: false });
   };
 
   const calculateEngine = (counts, sampleSize = 100) => {
@@ -434,22 +437,47 @@ export default function Lab() {
                 <button onClick={() => setShowNewTestModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
               </div>
               <form onSubmit={handleNewTestSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-text-muted mb-1">Target Batch ID *</label>
-                  <select required value={formData.batch} onChange={e=>setFormData({...formData, batch: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none font-mono">
-                    <option value="">Select Batch...</option>
-                    {batches.map(b => <option key={b.id} value={b.id}>{b.id} - {b.variety} ({b.currentQty} seeds avail)</option>)}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">Target Batch ID *</label>
+                    <select required value={formData.batch} onChange={e=>setFormData({...formData, batch: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none font-mono">
+                      <option value="">Select Batch...</option>
+                      {batches.map(b => <option key={b.id} value={b.id}>{b.id} - {b.variety} ({b.currentQty} seeds avail)</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">Test Type</label>
+                    <select value={formData.testType} onChange={e=>setFormData({...formData, testType: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none">
+                      <option value="Germination">Germination</option>
+                      <option value="Physical">Physical (Moisture)</option>
+                      <option value="Feminisation">Feminisation</option>
+                      <option value="Pathogen">Pathogen (HLVd etc)</option>
+                    </select>
+                  </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-text-muted mb-1">Sample Size (Seeds) *</label>
                     <input required type="number" min="10" value={formData.sampleSize} onChange={e=>setFormData({...formData, sampleSize: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none font-mono" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-text-muted mb-1">Target Temp</label>
-                    <input type="text" value={formData.targetTemp} onChange={e=>setFormData({...formData, targetTemp: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
-                  </div>
+                  {formData.testType === 'Physical' && (
+                    <div>
+                      <label className="block text-xs font-medium text-text-muted mb-1">Moisture Result (%)</label>
+                      <input type="number" step="0.1" value={formData.moisturePct} onChange={e=>setFormData({...formData, moisturePct: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                    </div>
+                  )}
+                  {formData.testType === 'Pathogen' && (
+                    <div className="flex flex-col justify-center pt-4">
+                       <label className="flex items-center space-x-2 text-sm text-white cursor-pointer">
+                         <input type="checkbox" checked={formData.pathogenDetected} onChange={e=>setFormData({...formData, pathogenDetected: e.target.checked})} className="form-checkbox text-red-500 bg-background border-border rounded focus:ring-red-500" />
+                         <span className={formData.pathogenDetected ? 'text-red-500 font-bold' : ''}>Pathogen Detected (Positive)</span>
+                       </label>
+                    </div>
+                  )}
+                  {(formData.testType === 'Germination' || formData.testType === 'Feminisation') && (
+                    <div>
+                      <label className="block text-xs font-medium text-text-muted mb-1">Target Temp</label>
+                      <input type="text" value={formData.targetTemp} onChange={e=>setFormData({...formData, targetTemp: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-primary-cyan focus:outline-none" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-muted mb-1">Testing Method</label>

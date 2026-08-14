@@ -1,4 +1,4 @@
-import { LayoutDashboard, Dna, Package, Beaker, ShieldCheck, Settings, CheckSquare, Receipt, Truck, Network } from "lucide-react";
+import { LayoutDashboard, Dna, Package, Beaker, ShieldCheck, Settings, CheckSquare, Receipt, Truck, Network, AlertCircle, Server } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { useAppContext } from "../../context/AppContext";
@@ -12,9 +12,12 @@ export function Sidebar() {
     { name: "Catalog", path: "/catalog", icon: Dna, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
     { name: "Genetics Engine", path: "/genetics", icon: Network, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Enterprise"] },
     { name: "Inventory", path: "/inventory", icon: Package, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
-    { name: "Germination Test", path: "/lab", icon: Beaker, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Producer", "Enterprise"] },
+    { name: "Lab & Testing", path: "/lab", icon: Beaker, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Producer", "Enterprise"] },
+    { name: "Quality Agreements", path: "/quality-agreements", icon: ShieldCheck, roles: ["Admin", "Quality Manager"], tiers: ["Enterprise"] },
+    { name: "Quality Events", path: "/quality-events", icon: AlertCircle, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Producer", "Enterprise"] },
     { name: "Sales & Invoicing", path: "/sales", icon: Receipt, roles: ["Admin", "Quality Manager"], tiers: ["Lite", "Producer", "Enterprise"] },
     { name: "Logistics & Shipping", path: "/logistics", icon: Truck, roles: ["Admin", "Quality Manager"], tiers: ["Lite", "Producer", "Enterprise"] },
+    { name: "Facilities & Vaults", path: "/facilities", icon: Server, roles: ["Admin", "Quality Manager"], tiers: ["Producer", "Enterprise"] },
     { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
     { name: "Settings", path: "/settings", icon: Settings, roles: ["Admin"], tiers: ["Lite", "Producer", "Enterprise"] },
   ];

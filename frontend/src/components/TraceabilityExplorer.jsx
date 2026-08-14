@@ -5,7 +5,7 @@ import { Search, X, Network, Package, FlaskConical, Link2, ArrowRight, ShieldAle
 import { useAppContext } from '../context/AppContext';
 
 export function TraceabilityExplorer({ initialQuery = '', onClose }) {
-  const { batches, varieties, tests, invoices, crosses, mothers, clones, runImpactAnalysis, executeCascadingQuarantine } = useAppContext();
+  const { batches, varieties, tests, invoices, crosses, mothers, clones, runImpactAnalysis, executeCascadingQuarantine, qualityEvents } = useAppContext();
   const [query, setQuery] = useState(initialQuery);
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('visual');
@@ -194,12 +194,28 @@ export function TraceabilityExplorer({ initialQuery = '', onClose }) {
                   {/* TARGET NODE */}
                   <div className="my-12 relative">
                     <div className="absolute top-1/2 left-0 right-0 h-px bg-primary-cyan/30 -z-10"></div>
-                    <div className="bg-card border-2 border-primary-cyan rounded-xl p-6 shadow-[0_0_30px_rgba(6,182,212,0.2)] max-w-lg mx-auto text-center transform scale-105">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-cyan/20 text-primary-cyan mb-4">
+                    <div className={`bg-card border-2 ${result.data?.status === 'Quarantined' ? 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]' : 'border-primary-cyan shadow-[0_0_30px_rgba(6,182,212,0.2)]'} rounded-xl p-6 max-w-lg mx-auto text-center transform scale-105 relative`}>
+                      
+                      {/* Quality Events Badge */}
+                      {(() => {
+                        const relatedEvents = qualityEvents?.filter(ev => ev.relatedEntity?.toUpperCase() === result.id.toUpperCase()) || [];
+                        const openEvents = relatedEvents.filter(ev => ev.status === 'Open');
+                        if (openEvents.length > 0 || result.data?.status === 'Quarantined') {
+                          return (
+                            <div className="absolute -top-4 -right-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center border-2 border-background animate-pulse">
+                              <AlertOctagon className="w-4 h-4 mr-1" />
+                              {result.data?.status === 'Quarantined' ? 'QUARANTINED' : `${openEvents.length} OPEN EVENT(S)`}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${result.data?.status === 'Quarantined' ? 'bg-red-500/20 text-red-500' : 'bg-primary-cyan/20 text-primary-cyan'} mb-4`}>
                         {result.type === 'Batch' ? <Package className="w-6 h-6" /> : <FlaskConical className="w-6 h-6" />}
                       </div>
                       <h2 className="text-2xl font-bold text-white font-mono mb-1">{result.id}</h2>
-                      <p className="text-sm text-primary-cyan uppercase tracking-widest font-bold">{result.type}</p>
+                      <p className={`text-sm uppercase tracking-widest font-bold ${result.data?.status === 'Quarantined' ? 'text-red-500' : 'text-primary-cyan'}`}>{result.type}</p>
                     </div>
                   </div>
 

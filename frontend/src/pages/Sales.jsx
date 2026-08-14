@@ -53,11 +53,15 @@ export default function Sales() {
   const handleAddInvoice = async (e) => {
     e.preventDefault();
     if(invoiceForm.clientId && invoiceItems.length > 0) {
-      const totalAmount = invoiceItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-      await addInvoice({ ...invoiceForm, totalAmount }, invoiceItems);
-      setShowInvoiceModal(false);
-      setInvoiceForm({ clientId: '', type: 'Factura', date: new Date().toISOString().split('T')[0], language: 'es' });
-      setInvoiceItems([]);
+      try {
+        const totalAmount = invoiceItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        await addInvoice({ ...invoiceForm, totalAmount }, invoiceItems);
+        setShowInvoiceModal(false);
+        setInvoiceForm({ clientId: '', type: 'Factura', date: new Date().toISOString().split('T')[0], language: 'es' });
+        setInvoiceItems([]);
+      } catch (err) {
+        alert(err.message);
+      }
     } else {
       alert("Debes seleccionar un cliente y añadir al menos una línea.");
     }

@@ -12,6 +12,9 @@ import Tasks from "./pages/Tasks";
 import Sales from "./pages/Sales";
 import Login from "./pages/Login";
 import Logistics from "./pages/Logistics";
+import Facilities from "./pages/Facilities";
+import QualityAgreements from "./pages/QualityAgreements";
+import QualityEvents from "./pages/QualityEvents";
 import { AppProvider, useAppContext } from './context/AppContext';
 import { SecurityGuard } from './components/SecurityGuard';
 
@@ -30,6 +33,9 @@ function App() {
               <Route path="/lab" element={<Lab />} />
               <Route path="/sales" element={<Sales />} />
               <Route path="/logistics" element={<Logistics />} />
+              <Route path="/facilities" element={<Facilities />} />
+              <Route path="/quality-agreements" element={<QualityAgreements />} />
+              <Route path="/quality-events" element={<QualityEvents />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

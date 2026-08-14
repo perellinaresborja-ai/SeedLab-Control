@@ -20,6 +20,10 @@ export function AppProvider({ children }) {
   const [companyProfile, setCompanyProfile] = useState(() => JSON.parse(localStorage.getItem('seedlab_company')) || { costPerSeed: 0.50 });
   const [clients, setClients] = useState(() => JSON.parse(localStorage.getItem('seedlab_clients')) || []);
   const [invoices, setInvoices] = useState(() => JSON.parse(localStorage.getItem('seedlab_invoices')) || []);
+  const [qualityAgreements, setQualityAgreements] = useState(() => JSON.parse(localStorage.getItem('seedlab_quality_agreements')) || [
+    { id: 'QA-001', clientId: 'CLI-0001', minGermination: 98, maxMoisture: 8, minFeminisation: 99, requiresPathogenFree: true, requiresColdChain: true, maxTransportTemp: 8, requiresDataLogger: true, requiresTamperSeal: true }
+  ]);
+  const [qualityEvents, setQualityEvents] = useState(() => JSON.parse(localStorage.getItem('seedlab_quality_events')) || []);
   const [facilities, setFacilities] = useState(() => {
     try {
       const localString = localStorage.getItem('seedlab_facilities');
@@ -183,7 +187,9 @@ export function AppProvider({ children }) {
     saveToLocal('seedlab_cultivation_logs', cultivationLogs);
     saveToLocal('seedlab_facilities', facilities);
     saveToLocal('seedlab_webhooks', webhookLogs);
-  }, [varieties, batches, tests, auditLogs, customTasks, users, companyProfile, clients, invoices, origins, mothers, clones, pollen, crosses, cultivationLogs, facilities, webhookLogs, currentUser]);
+    saveToLocal('seedlab_quality_agreements', qualityAgreements);
+    saveToLocal('seedlab_quality_events', qualityEvents);
+  }, [varieties, batches, tests, auditLogs, customTasks, users, companyProfile, clients, invoices, origins, mothers, clones, pollen, crosses, cultivationLogs, facilities, webhookLogs, qualityAgreements, qualityEvents, currentUser]);
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -432,6 +438,7 @@ export function AppProvider({ children }) {
     const newTest = {
       custom_id: customId,
       batch: test.batch,
+      testType: test.testType || 'Germination',
       sample_size: test.sampleSize,
       technician: test.technician,
       method: test.method,
@@ -439,7 +446,9 @@ export function AppProvider({ children }) {
       start_date: test.startDate,
       status: 'In Progress',
       daily_counts: {},
-      notes: test.notes || ''
+      notes: test.notes || '',
+      moisturePct: test.moisturePct || null,
+      pathogenDetected: test.pathogenDetected || false
     };
     
     const uiTest = {...newTest, id: customId, sampleSize: newTest.sample_size, targetTemp: newTest.target_temp, startDate: newTest.start_date, dailyCounts: {}};
@@ -513,6 +522,46 @@ export function AppProvider({ children }) {
     addAuditLog('Created Client', customId, `Added new client: ${newClient.name}`);
   };
 
+  const evaluateCustomerQualityGate = (batchId, clientId) => {
+    const agreement = qualityAgreements.find(qa => qa.clientId === clientId);
+    if (!agreement) return { passed: true, reason: 'No Quality Agreement' };
+
+    const batchTests = tests.filter(t => t.batch === batchId && t.status === 'Completed');
+    
+    const germTests = batchTests.filter(t => t.testType === 'Germination' || !t.testType);
+    const latestGerm = germTests.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+    if (agreement.minGermination && (!latestGerm || latestGerm.final_pct < agreement.minGermination)) {
+      return { passed: false, reason: `Failed Germination QA (Req: >${agreement.minGermination}%, Got: ${latestGerm ? latestGerm.final_pct : 'None'})` };
+    }
+
+    const physTests = batchTests.filter(t => t.testType === 'Physical');
+    const latestPhys = physTests.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+    if (agreement.maxMoisture && (!latestPhys || latestPhys.moisturePct > agreement.maxMoisture)) {
+      return { passed: false, reason: `Failed Moisture QA (Req: <${agreement.maxMoisture}%, Got: ${latestPhys ? latestPhys.moisturePct : 'None'})` };
+    }
+
+    const femTests = batchTests.filter(t => t.testType === 'Feminisation');
+    const latestFem = femTests.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+    if (agreement.minFeminisation && (!latestFem || latestFem.final_pct < agreement.minFeminisation)) {
+      return { passed: false, reason: `Failed Feminisation QA (Req: >${agreement.minFeminisation}%, Got: ${latestFem ? latestFem.final_pct : 'None'})` };
+    }
+
+    const pathTests = batchTests.filter(t => t.testType === 'Pathogen');
+    const latestPath = pathTests.sort((a,b) => new Date(b.start_date) - new Date(a.start_date))[0];
+    if (agreement.requiresPathogenFree && (!latestPath || latestPath.pathogenDetected)) {
+      return { passed: false, reason: `Failed Pathogen QA (Req: Pathogen-Free)` };
+    }
+
+    if (latestGerm) {
+      const monthsSinceTest = (new Date() - new Date(latestGerm.start_date)) / (1000 * 60 * 60 * 24 * 30);
+      if (monthsSinceTest > 6) {
+        return { passed: false, reason: `Test expired. Last test > 6 months ago.` };
+      }
+    }
+
+    return { passed: true, reason: 'Passed all gates' };
+  };
+
   const addInvoice = async (invoice, invoiceItems) => {
     const customId = `INV-${new Date().getFullYear()}-${Math.floor(Math.random()*10000).toString().padStart(4, '0')}`;
     const newInvoice = {
@@ -535,6 +584,12 @@ export function AppProvider({ children }) {
         const batch = batches.find(b => b.id === item.batchId);
         if (batch && batch.status !== 'Apto') {
            throw new Error(`GMP Violation: Batch ${item.batchId} is not 'Apto' (Current Status: ${batch.status}). Cannot process sale.`);
+        }
+        
+        // Quality Gate Block
+        const qGate = evaluateCustomerQualityGate(item.batchId, invoice.clientId);
+        if (!qGate.passed) {
+           throw new Error(`Customer Quality Gate Blocked Dispatch for Batch ${item.batchId}: ${qGate.reason}`);
         }
       }
       for (const item of invoiceItems) {
@@ -616,6 +671,22 @@ export function AppProvider({ children }) {
     const newLog = { ...log, id, date: log.date, time: log.time, operator: log.operator };
     setCultivationLogs(prev => [newLog, ...prev]);
     addAuditLog('Cultivation Log', log.entityId, `Applied ${log.type}: ${log.product} (${log.dose}) by ${log.operator}`);
+  };
+
+  const addQualityEvent = async (event) => {
+    const id = `QE-${Date.now()}`;
+    const newEvent = { ...event, id, date: new Date().toISOString().split('T')[0], status: 'Open', CAPA: false, recall: false };
+    setQualityEvents(prev => [newEvent, ...prev]);
+    addAuditLog('Quality Event Created', id, `Type: ${event.type}. Title: ${event.title}`);
+    return id;
+  };
+
+  const updateQualityEvent = async (id, updates, qaPin) => {
+    if (updates.status === 'Closed' && qaPin !== '0000') {
+      throw new Error('QA PIN required to close a Quality Event');
+    }
+    setQualityEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    addAuditLog('Quality Event Updated', id, `Updates applied. Status: ${updates.status}`);
   };
 
   // Phase 3: Actionable Genealogy 360 & Recalls
@@ -744,6 +815,9 @@ export function AppProvider({ children }) {
       isAuditMode, setIsAuditMode,
       facilities, setFacilities,
       webhookLogs, setWebhookLogs,
+      qualityAgreements, setQualityAgreements,
+      qualityEvents, addQualityEvent, updateQualityEvent,
+      evaluateCustomerQualityGate,
       runImpactAnalysis, executeCascadingQuarantine
     }}>
       {children}
