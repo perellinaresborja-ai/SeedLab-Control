@@ -1,4 +1,4 @@
-import { LayoutDashboard, Dna, Package, Beaker, ShieldCheck, Settings, CheckSquare, Receipt, Truck, Network, AlertCircle, Server } from "lucide-react";
+import { LayoutDashboard, Dna, Package, Beaker, ShieldCheck, Settings, CheckSquare, Receipt, Truck, Network, AlertCircle, Server, Store } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { useAppContext } from "../../context/AppContext";
@@ -18,6 +18,7 @@ export function Sidebar() {
     { name: "Sales & Invoicing", path: "/sales", icon: Receipt, roles: ["Admin", "Quality Manager"], tiers: ["Lite", "Producer", "Enterprise"] },
     { name: "Logistics & Shipping", path: "/logistics", icon: Truck, roles: ["Admin", "Quality Manager"], tiers: ["Lite", "Producer", "Enterprise"] },
     { name: "Facilities & Vaults", path: "/facilities", icon: Server, roles: ["Admin", "Quality Manager"], tiers: ["Producer", "Enterprise"] },
+    { name: "Acquisitions & B2B", path: "/acquisitions", icon: Store, roles: ["Admin", "Quality Manager"], tiers: ["Producer", "Enterprise"] },
     { name: "Tasks", path: "/tasks", icon: CheckSquare, roles: ["Admin", "Quality Manager", "Lab Technician"], tiers: ["Lite", "Producer", "Enterprise"] },
     { name: "Settings", path: "/settings", icon: Settings, roles: ["Admin"], tiers: ["Lite", "Producer", "Enterprise"] },
   ];

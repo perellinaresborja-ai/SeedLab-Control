@@ -68,6 +68,10 @@ export function AppProvider({ children }) {
   ]);
   const [crosses, setCrosses] = useState(() => JSON.parse(localStorage.getItem('seedlab_crosses')) || []);
   const [cultivationLogs, setCultivationLogs] = useState(() => JSON.parse(localStorage.getItem('seedlab_cultivation_logs')) || []);
+  const [acquisitions, setAcquisitions] = useState(() => JSON.parse(localStorage.getItem('seedlab_acquisitions')) || [
+    { id: 'ACQ-001', date: '2026-07-10', supplier: 'Greenhouse Seeds', materialType: 'Clones', variety: 'Super Lemon Haze', quantity: 500, unitCost: 15.00, totalCost: 7500.00, phytosanitaryId: 'PHYTO-GS-8812', batchId: 'GS-SLH-26' },
+    { id: 'ACQ-002', date: '2026-07-22', supplier: 'Soma Seeds', materialType: 'Seeds', variety: 'Amnesia Haze', quantity: 1000, unitCost: 5.50, totalCost: 5500.00, phytosanitaryId: 'PHYTO-SS-9921', batchId: 'SS-AMH-26' }
+  ]);
 
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -189,7 +193,8 @@ export function AppProvider({ children }) {
     saveToLocal('seedlab_webhooks', webhookLogs);
     saveToLocal('seedlab_quality_agreements', qualityAgreements);
     saveToLocal('seedlab_quality_events', qualityEvents);
-  }, [varieties, batches, tests, auditLogs, customTasks, users, companyProfile, clients, invoices, origins, mothers, clones, pollen, crosses, cultivationLogs, facilities, webhookLogs, qualityAgreements, qualityEvents, currentUser]);
+    saveToLocal('seedlab_acquisitions', acquisitions);
+  }, [varieties, batches, tests, auditLogs, customTasks, users, companyProfile, clients, invoices, origins, mothers, clones, pollen, crosses, cultivationLogs, facilities, webhookLogs, qualityAgreements, qualityEvents, acquisitions, currentUser]);
 
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -244,10 +249,32 @@ export function AppProvider({ children }) {
   };
 
   const addCustomTask = async (content) => {
-    const newTask = { id: Date.now().toString(), content, completed: false };
+    const newTask = { id: Date.now().toString(), content, completed: false, created_at: new Date().toISOString() };
     setCustomTasks(prev => [newTask, ...prev]);
     await supabase.from('custom_tasks').insert([newTask]);
   };
+
+  const addAcquisition = (acqData) => {
+    const newAcq = {
+      id: `ACQ-${Date.now().toString().slice(-4)}`,
+      date: new Date().toISOString().split('T')[0],
+      ...acqData
+    };
+    
+    // Save to acquisitions
+    setAcquisitions(prev => [newAcq, ...prev]);
+    
+    // Add to Origins automatically
+    const newOrigin = {
+      id: `ORG-${Math.floor(Math.random() * 10000)}`,
+      name: acqData.variety,
+      type: `B2B Purchase - ${acqData.supplier}`,
+      date: newAcq.date
+    };
+    setOrigins(prev => [newOrigin, ...prev]);
+    addAuditLog('New Acquisition', newAcq.id, `Received ${acqData.quantity} ${acqData.materialType} of ${acqData.variety} from ${acqData.supplier}`);
+  };
+
   const toggleCustomTask = async (id) => {
     const task = customTasks.find(t => t.id === id);
     if (!task) return;
@@ -818,7 +845,8 @@ export function AppProvider({ children }) {
       qualityAgreements, setQualityAgreements,
       qualityEvents, addQualityEvent, updateQualityEvent,
       evaluateCustomerQualityGate,
-      runImpactAnalysis, executeCascadingQuarantine
+      runImpactAnalysis, executeCascadingQuarantine,
+      acquisitions, addAcquisition
     }}>
       {children}
     </AppContext.Provider>

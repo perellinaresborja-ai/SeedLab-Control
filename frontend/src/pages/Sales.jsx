@@ -330,7 +330,7 @@ export default function Sales() {
         {showClientModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowClientModal(false)} />
-            <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="glass-panel p-6 w-full max-w-md relative z-10 border-t-4 border-t-primary-green">
+            <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="glass-panel p-6 w-full max-w-md relative z-10 border-l-4 border-l-primary-green">
               <button onClick={() => setShowClientModal(false)} className="absolute top-4 right-4 text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
               <h3 className="text-xl font-bold text-white mb-4">Add New Client</h3>
               <form onSubmit={handleAddClient} className="space-y-4">
@@ -362,7 +362,7 @@ export default function Sales() {
         {showInvoiceModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowInvoiceModal(false)} />
-            <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="glass-panel p-6 w-full max-w-2xl relative z-10 border-t-4 border-t-primary-cyan max-h-[90vh] overflow-y-auto">
+            <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="glass-panel p-6 w-full max-w-2xl relative z-10 border-l-4 border-l-primary-cyan max-h-[90vh] overflow-y-auto">
               <button onClick={() => setShowInvoiceModal(false)} className="absolute top-4 right-4 text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
               <h3 className="text-xl font-bold text-white mb-6">Issue Document</h3>
               

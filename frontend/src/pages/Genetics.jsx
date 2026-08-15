@@ -19,7 +19,7 @@ export default function Genetics() {
   const [originForm, setOriginForm] = useState({ name: '', type: 'In-house Breeder', date: new Date().toISOString().split('T')[0], notes: '' });
   const [motherForm, setMotherForm] = useState({ originId: '', strain: '', location: 'Room A', status: 'Vegetative' });
   const [cloneForm, setCloneForm] = useState({ motherId: '', quantity: 50, date: new Date().toISOString().split('T')[0] });
-  const [pollenForm, setPollenForm] = useState({ strain: '', extractionDate: new Date().toISOString().split('T')[0], quantityGrams: 10, viability: 95 });
+  const [pollenForm, setPollenForm] = useState({ strain: '', extractionDate: new Date().toISOString().split('T')[0], quantityGrams: 10, viability: 95, humidity: 45, temperature: -20, location: '', operator: '' });
   const [crossForm, setCrossForm] = useState({ femaleId: '', maleId: '', newStrainName: '', seedYield: 1000 });
   const [logForm, setLogForm] = useState({ 
     type: 'Nutrient', product: '', dose: '', 
@@ -65,7 +65,7 @@ export default function Genetics() {
     e.preventDefault();
     addPollen(pollenForm);
     setShowPollenModal(false);
-    setPollenForm({ strain: '', extractionDate: new Date().toISOString().split('T')[0], quantityGrams: 10, viability: 95 });
+    setPollenForm({ strain: '', extractionDate: new Date().toISOString().split('T')[0], quantityGrams: 10, viability: 95, humidity: 45, temperature: -20, location: '', operator: '' });
   };
 
   const handleCrossSubmit = (e) => {
@@ -409,7 +409,7 @@ export default function Genetics() {
         {/* Origin Modal */}
         {showOriginModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-4 border-t-primary-cyan">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-l-4 border-l-primary-cyan">
               <div className="p-5 border-b border-border flex justify-between items-center bg-card/50">
                 <h3 className="text-lg font-bold text-white flex items-center"><TreePine className="w-5 h-5 mr-2 text-primary-cyan"/> Registrar Origen Genético</h3>
                 <button onClick={() => setShowOriginModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
@@ -443,7 +443,7 @@ export default function Genetics() {
         {/* Mother Modal */}
         {showMotherModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-4 border-t-primary-green">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-l-4 border-l-primary-green">
               <div className="p-5 border-b border-border flex justify-between items-center bg-card/50">
                 <h3 className="text-lg font-bold text-white flex items-center"><Dna className="w-5 h-5 mr-2 text-primary-green"/> Alta Planta Madre</h3>
                 <button onClick={() => setShowMotherModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
@@ -472,7 +472,7 @@ export default function Genetics() {
         {/* Clone Modal */}
         {showCloneModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-4 border-t-blue-400">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-l-4 border-l-blue-400">
               <div className="p-5 border-b border-border flex justify-between items-center bg-card/50">
                 <h3 className="text-lg font-bold text-white flex items-center"><Scissors className="w-5 h-5 mr-2 text-blue-400"/> Cortar Lote de Esquejes</h3>
                 <button onClick={() => setShowCloneModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
@@ -501,7 +501,7 @@ export default function Genetics() {
         {/* Pollen Modal */}
         {showPollenModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-t-4 border-t-yellow-400">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden border-l-4 border-l-yellow-400">
               <div className="p-5 border-b border-border flex justify-between items-center bg-card/50">
                 <h3 className="text-lg font-bold text-white flex items-center"><Wind className="w-5 h-5 mr-2 text-yellow-400"/> Extraer Polen</h3>
                 <button onClick={() => setShowPollenModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
@@ -524,6 +524,26 @@ export default function Genetics() {
                     <input type="number" required min="1" max="100" value={pollenForm.viability} onChange={e => setPollenForm({...pollenForm, viability: parseInt(e.target.value)})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-yellow-400 focus:outline-none font-mono" />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">Ubicación / Nevera</label>
+                    <input type="text" required value={pollenForm.location} onChange={e => setPollenForm({...pollenForm, location: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-yellow-400 focus:outline-none" placeholder="Ej: Nevera A2" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">Operador (Extracción)</label>
+                    <input type="text" required value={pollenForm.operator} onChange={e => setPollenForm({...pollenForm, operator: e.target.value})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-yellow-400 focus:outline-none" placeholder="Nombre..." />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">Temp. Conservación (ºC)</label>
+                    <input type="number" required value={pollenForm.temperature} onChange={e => setPollenForm({...pollenForm, temperature: parseInt(e.target.value)})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-yellow-400 focus:outline-none font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">Humedad (RH %)</label>
+                    <input type="number" required min="1" max="100" value={pollenForm.humidity} onChange={e => setPollenForm({...pollenForm, humidity: parseInt(e.target.value)})} className="w-full bg-background border border-border rounded p-2 text-white focus:border-yellow-400 focus:outline-none font-mono" />
+                  </div>
+                </div>
                 <div className="pt-4 flex justify-end space-x-3">
                   <button type="button" onClick={() => setShowPollenModal(false)} className="px-4 py-2 rounded text-text-muted hover:bg-border transition-colors">Cancelar</button>
                   <button type="submit" className="px-4 py-2 rounded bg-yellow-400 text-black font-medium hover:bg-yellow-500 transition-colors">Añadir al Banco</button>
@@ -536,7 +556,7 @@ export default function Genetics() {
         {/* Cross Modal */}
         {showCrossModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border-t-4 border-t-purple-500">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border-l-4 border-l-purple-500">
               <div className="p-5 border-b border-border flex justify-between items-center bg-card/50">
                 <h3 className="text-lg font-bold text-white flex items-center"><Beaker className="w-5 h-5 mr-2 text-purple-400"/> Generar Nuevo Cruce</h3>
                 <button onClick={() => setShowCrossModal(false)} className="text-text-muted hover:text-white"><X className="w-5 h-5"/></button>
